@@ -8,7 +8,7 @@ This pipeline proposes a **Continuous Integration (CI)** and **Continuous Delive
 - Manual approval before production.
 - Observability and controlled rollback.
 
-## CI Diagram
+## CI Diagram for Application Code
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
     BR --> A
 ```
 
-## CD Diagram
+## CD Diagram for Application Deployment
 
 ```mermaid
 flowchart LR
@@ -48,7 +48,7 @@ flowchart LR
   Q -- "Yes" --> OK["Successful release"]
 ```
 
-## Infrastructure CI/CD Diagram (Terraform + AWS)
+## Only for Infrastructure CI/CD Diagram (Terraform + AWS)
 
 ```mermaid
 flowchart TB
