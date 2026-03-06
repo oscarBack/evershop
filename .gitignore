@@ -31,3 +31,5 @@ cypress
 mysqlToPostgres.js
 /docs
 extensions
+skills-lock.json
+.agents/
