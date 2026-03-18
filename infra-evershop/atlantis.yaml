@@ -1,0 +1,47 @@
+# Atlantis configuration for infra-evershop
+# https://www.runatlantis.io/docs/custom-workflows.html
+
+version: 3
+projects:
+  - name: evershop-dev
+    dir: .
+    workspace: dev
+    terraform_version: 1.5.0
+    autoplan:
+      enabled: true
+      when_modified:
+        - "*.tf"
+        - "*.hcl"
+      when_unmodified:
+        - "*.tf"
+        - "*.hcl"
+
+  - name: evershop-qa
+    dir: .
+    workspace: qa
+    terraform_version: 1.5.0
+    autoplan:
+      enabled: true
+      when_modified:
+        - "*.tf"
+        - "*.hcl"
+
+  - name: evershop-prod
+    dir: .
+    workspace: prod
+    terraform_version: 1.5.0
+    autoplan:
+      enabled: true
+      when_modified:
+        - "*.tf"
+        - "*.hcl"
+
+workflows:
+  default:
+    plan:
+      steps:
+        - init
+        - plan
+    apply:
+      steps:
+        - apply
