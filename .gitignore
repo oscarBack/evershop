@@ -33,3 +33,4 @@ mysqlToPostgres.js
 extensions
 skills-lock.json
 .agents/
+.kiro/
