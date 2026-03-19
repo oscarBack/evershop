@@ -20,6 +20,10 @@ npm-debug.log
 /media
 /public
 .DS_Store
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
 .log
 coverage
 cypress
