@@ -82,3 +82,19 @@ output "aws_load_balancer_controller_iam_role_arn" {
   description = "ARN of the IAM role for AWS Load Balancer Controller"
   value       = aws_iam_role.aws_load_balancer_controller.arn
 }
+
+# CloudWatch Log Group Outputs
+output "cloudwatch_log_group_graphql_api" {
+  description = "CloudWatch log group name for GraphQL API"
+  value       = aws_cloudwatch_log_group.graphql_api.name
+}
+
+output "cloudwatch_log_group_frontend" {
+  description = "CloudWatch log group name for React Frontend"
+  value       = aws_cloudwatch_log_group.frontend.name
+}
+
+output "cloudwatch_log_group_application" {
+  description = "CloudWatch log group name for general application logs"
+  value       = aws_cloudwatch_log_group.application.name
+}
