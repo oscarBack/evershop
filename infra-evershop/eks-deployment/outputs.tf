@@ -121,3 +121,24 @@ output "acm_certificate_arn" {
   description = "ARN of the ACM certificate attached to the ALB ingress"
   value       = var.acm_certificate_arn
 }
+
+# ECR Outputs
+output "ecr_graphql_api_repository_url" {
+  description = "URL of the ECR repository for GraphQL API"
+  value       = aws_ecr_repository.graphql_api.repository_url
+}
+
+output "ecr_graphql_api_repository_arn" {
+  description = "ARN of the ECR repository for GraphQL API"
+  value       = aws_ecr_repository.graphql_api.arn
+}
+
+output "ecr_react_frontend_repository_url" {
+  description = "URL of the ECR repository for React Frontend"
+  value       = aws_ecr_repository.react_frontend.repository_url
+}
+
+output "ecr_react_frontend_repository_arn" {
+  description = "ARN of the ECR repository for React Frontend"
+  value       = aws_ecr_repository.react_frontend.arn
+}
