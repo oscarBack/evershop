@@ -162,3 +162,14 @@ variable "cloudwatch_log_retention_days" {
   type        = number
   default     = 30
 }
+
+# Ingress
+variable "acm_certificate_arn" {
+  description = "ARN of the ACM certificate for HTTPS on the ALB"
+  type        = string
+}
+
+variable "domain_name" {
+  description = "Base domain name for EverShop services (e.g. evershop.example.com)"
+  type        = string
+}

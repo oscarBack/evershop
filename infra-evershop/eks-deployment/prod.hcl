@@ -24,6 +24,9 @@ rds_backup_retention_period = 30
 
 cloudwatch_log_retention_days = 30
 
+domain_name         = "evershop.example.com"
+acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
+
 common_tags = {
   ManagedBy    = "Terraform"
   Organization = "EverShop"
