@@ -21,24 +21,24 @@ resource "aws_security_group" "eks_nodes" {
 
 # Ingress: HTTPS (443) from ALB security group
 resource "aws_security_group_rule" "eks_nodes_ingress_alb_https" {
-  security_group_id = aws_security_group.eks_nodes.id
-  type              = "ingress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
+  security_group_id        = aws_security_group.eks_nodes.id
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.alb.id
-  description       = "Allow HTTPS from ALB"
+  description              = "Allow HTTPS from ALB"
 }
 
 # Ingress: kubelet (10250) from EKS control plane
 resource "aws_security_group_rule" "eks_nodes_ingress_kubelet" {
-  security_group_id = aws_security_group.eks_nodes.id
-  type              = "ingress"
-  from_port         = 10250
-  to_port           = 10250
-  protocol          = "tcp"
+  security_group_id        = aws_security_group.eks_nodes.id
+  type                     = "ingress"
+  from_port                = 10250
+  to_port                  = 10250
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_cluster.id
-  description       = "Allow kubelet from EKS control plane"
+  description              = "Allow kubelet from EKS control plane"
 }
 
 # Ingress: DNS (53) from VPC CIDR
@@ -64,13 +64,13 @@ resource "aws_security_group_rule" "eks_nodes_ingress_dns_udp" {
 
 # Ingress: Ephemeral ports (1024-65535) from EKS nodes (node-to-node communication)
 resource "aws_security_group_rule" "eks_nodes_ingress_ephemeral" {
-  security_group_id = aws_security_group.eks_nodes.id
-  type              = "ingress"
-  from_port         = 1024
-  to_port           = 65535
-  protocol          = "tcp"
+  security_group_id        = aws_security_group.eks_nodes.id
+  type                     = "ingress"
+  from_port                = 1024
+  to_port                  = 65535
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_nodes.id
-  description       = "Allow ephemeral ports from self (node-to-node)"
+  description              = "Allow ephemeral ports from self (node-to-node)"
 }
 
 # Ingress: NodePort services (30000-32767) from VPC
@@ -115,24 +115,24 @@ resource "aws_security_group" "eks_cluster" {
 
 # Ingress: Kubernetes API server (443) from EKS nodes
 resource "aws_security_group_rule" "eks_cluster_ingress_nodes" {
-  security_group_id = aws_security_group.eks_cluster.id
-  type              = "ingress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
+  security_group_id        = aws_security_group.eks_cluster.id
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_nodes.id
-  description       = "Allow API server access from worker nodes"
+  description              = "Allow API server access from worker nodes"
 }
 
 # Ingress: kubelet API from worker nodes
 resource "aws_security_group_rule" "eks_cluster_ingress_kubelet" {
-  security_group_id = aws_security_group.eks_cluster.id
-  type              = "ingress"
-  from_port         = 10250
-  to_port           = 10250
-  protocol          = "tcp"
+  security_group_id        = aws_security_group.eks_cluster.id
+  type                     = "ingress"
+  from_port                = 10250
+  to_port                  = 10250
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_nodes.id
-  description       = "Allow kubelet API from worker nodes"
+  description              = "Allow kubelet API from worker nodes"
 }
 
 # Egress: HTTPS to VPC (for API calls)
@@ -166,13 +166,13 @@ resource "aws_security_group" "rds" {
 
 # Ingress: PostgreSQL (5432) from EKS nodes only
 resource "aws_security_group_rule" "rds_ingress_postgres" {
-  security_group_id = aws_security_group.rds.id
-  type              = "ingress"
-  from_port         = 5432
-  to_port           = 5432
-  protocol          = "tcp"
+  security_group_id        = aws_security_group.rds.id
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_nodes.id
-  description       = "Allow PostgreSQL from EKS worker nodes"
+  description              = "Allow PostgreSQL from EKS worker nodes"
 }
 
 # Egress: None required (RDS doesn't initiate connections)
@@ -229,35 +229,11 @@ resource "aws_security_group_rule" "alb_ingress_https" {
 
 # Egress: All traffic to EKS node security group
 resource "aws_security_group_rule" "alb_egress_eks_nodes" {
-  security_group_id = aws_security_group.alb.id
-  type              = "egress"
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "tcp"
+  security_group_id        = aws_security_group.alb.id
+  type                     = "egress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_nodes.id
-  description       = "Allow traffic to EKS worker nodes"
-}
-
-# =============================================================================
-# Security Group Outputs
-# =============================================================================
-
-output "eks_node_security_group_id" {
-  description = "Security group ID for EKS worker nodes"
-  value       = aws_security_group.eks_nodes.id
-}
-
-output "eks_cluster_security_group_id" {
-  description = "Security group ID for EKS cluster control plane"
-  value       = aws_security_group.eks_cluster.id
-}
-
-output "rds_security_group_id" {
-  description = "Security group ID for RDS PostgreSQL"
-  value       = aws_security_group.rds.id
-}
-
-output "alb_security_group_id" {
-  description = "Security group ID for Application Load Balancer"
-  value       = aws_security_group.alb.id
+  description              = "Allow traffic to EKS worker nodes"
 }

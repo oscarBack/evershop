@@ -18,12 +18,12 @@ module "aws_load_balancer_controller" {
   cluster_ca_data  = module.eks.cluster_certificate_authority_data
 
   # Helm release configuration
-  release_name       = "aws-load-balancer-controller"
-  chart_name         = "aws-load-balancer-controller"
-  chart_repository   = "https://aws.github.io/eks-charts"
-  chart_version      = "1.6.2"
-  namespace          = "kube-system"
-  create_namespace   = false
+  release_name     = "aws-load-balancer-controller"
+  chart_name       = "aws-load-balancer-controller"
+  chart_repository = "https://aws.github.io/eks-charts"
+  chart_version    = "1.6.2"
+  namespace        = "kube-system"
+  create_namespace = false
 
   # Service account with IRSA annotation
   service_account_name = "aws-load-balancer-controller"
@@ -93,7 +93,11 @@ module "aws_load_balancer_controller" {
 # Ingress Resource: GraphQL API
 # Routes traffic to graphql-api service on port 4000
 #
-# HTTP → HTTPS Redirect Configuration (FR7.2):
+# Environment-Specific Configuration:
+#   - Dev: HTTP only, no custom domain, no ACM certificate, access via ALB DNS
+#   - QA/Prod: HTTPS with redirect, custom domain, ACM certificate
+#
+# HTTP → HTTPS Redirect Configuration (QA/Prod only - FR7.2):
 #   - alb.ingress.kubernetes.io/listen-ports: enables both HTTP:80 and HTTPS:443 listeners
 #   - alb.ingress.kubernetes.io/ssl-redirect: instructs ALB to redirect HTTP to HTTPS:443
 #   - alb.ingress.kubernetes.io/actions.ssl-redirect: explicit 301 redirect action config,
@@ -105,26 +109,32 @@ resource "kubernetes_ingress_v1" "graphql_api" {
     name      = "${var.project_name}-graphql-api-ingress"
     namespace = "evershop"
 
-    annotations = {
-      "kubernetes.io/ingress.class"                        = "alb"
-      "alb.ingress.kubernetes.io/scheme"                   = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type"              = "ip"
-      "alb.ingress.kubernetes.io/security-groups"          = aws_security_group.alb.id
-      "alb.ingress.kubernetes.io/certificate-arn"          = var.acm_certificate_arn
-      "alb.ingress.kubernetes.io/listen-ports"             = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-      "alb.ingress.kubernetes.io/ssl-redirect"             = "443"
-      "alb.ingress.kubernetes.io/actions.ssl-redirect"     = jsonencode({
-        Type = "redirect"
-        RedirectConfig = {
-          Protocol   = "HTTPS"
-          Port       = "443"
-          StatusCode = "HTTP_301"
-        }
-      })
-      "alb.ingress.kubernetes.io/healthcheck-path"         = "/health"
-      "alb.ingress.kubernetes.io/healthcheck-port"         = "4000"
-      "alb.ingress.kubernetes.io/tags"                     = "Environment=${var.environment},Project=${var.project_name}"
-    }
+    annotations = merge(
+      {
+        "kubernetes.io/ingress.class"                = "alb"
+        "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
+        "alb.ingress.kubernetes.io/target-type"      = "ip"
+        "alb.ingress.kubernetes.io/security-groups"  = aws_security_group.alb.id
+        "alb.ingress.kubernetes.io/healthcheck-path" = "/health"
+        "alb.ingress.kubernetes.io/healthcheck-port" = "4000"
+        "alb.ingress.kubernetes.io/tags"             = "Environment=${var.environment},Project=${var.project_name}"
+      },
+      var.environment != "dev" && var.domain_name != "" && var.acm_certificate_arn != "" ? {
+        "alb.ingress.kubernetes.io/certificate-arn" = var.acm_certificate_arn
+        "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+        "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+        "alb.ingress.kubernetes.io/actions.ssl-redirect" = jsonencode({
+          Type = "redirect"
+          RedirectConfig = {
+            Protocol   = "HTTPS"
+            Port       = "443"
+            StatusCode = "HTTP_301"
+          }
+        })
+        } : {
+        "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}]"
+      }
+    )
 
     labels = {
       app         = "graphql-api"
@@ -133,17 +143,42 @@ resource "kubernetes_ingress_v1" "graphql_api" {
   }
 
   spec {
-    rule {
-      host = "api.${var.domain_name}"
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "graphql-api"
-              port {
-                number = 4000
+    # Rule with custom domain (QA/Prod only)
+    dynamic "rule" {
+      for_each = var.environment != "dev" && var.domain_name != "" ? [1] : []
+      content {
+        host = "api.${var.domain_name}"
+        http {
+          path {
+            path      = "/"
+            path_type = "Prefix"
+            backend {
+              service {
+                name = "graphql-api"
+                port {
+                  number = 4000
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    # Rule without custom domain (Dev only - uses ALB DNS)
+    dynamic "rule" {
+      for_each = var.environment == "dev" || var.domain_name == "" ? [1] : []
+      content {
+        http {
+          path {
+            path      = "/api"
+            path_type = "Prefix"
+            backend {
+              service {
+                name = "graphql-api"
+                port {
+                  number = 4000
+                }
               }
             }
           }
@@ -159,7 +194,11 @@ resource "kubernetes_ingress_v1" "graphql_api" {
 # Ingress Resource: React Frontend
 # Routes traffic to react-frontend service on port 3000
 #
-# HTTP → HTTPS Redirect Configuration (FR7.2):
+# Environment-Specific Configuration:
+#   - Dev: HTTP only, no custom domain, no ACM certificate, access via ALB DNS
+#   - QA/Prod: HTTPS with redirect, custom domain, ACM certificate
+#
+# HTTP → HTTPS Redirect Configuration (QA/Prod only - FR7.2):
 #   - alb.ingress.kubernetes.io/listen-ports: enables both HTTP:80 and HTTPS:443 listeners
 #   - alb.ingress.kubernetes.io/ssl-redirect: instructs ALB to redirect HTTP to HTTPS:443
 #   - alb.ingress.kubernetes.io/actions.ssl-redirect: explicit 301 redirect action config,
@@ -171,26 +210,32 @@ resource "kubernetes_ingress_v1" "react_frontend" {
     name      = "${var.project_name}-frontend-ingress"
     namespace = "evershop"
 
-    annotations = {
-      "kubernetes.io/ingress.class"                        = "alb"
-      "alb.ingress.kubernetes.io/scheme"                   = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type"              = "ip"
-      "alb.ingress.kubernetes.io/security-groups"          = aws_security_group.alb.id
-      "alb.ingress.kubernetes.io/certificate-arn"          = var.acm_certificate_arn
-      "alb.ingress.kubernetes.io/listen-ports"             = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-      "alb.ingress.kubernetes.io/ssl-redirect"             = "443"
-      "alb.ingress.kubernetes.io/actions.ssl-redirect"     = jsonencode({
-        Type = "redirect"
-        RedirectConfig = {
-          Protocol   = "HTTPS"
-          Port       = "443"
-          StatusCode = "HTTP_301"
-        }
-      })
-      "alb.ingress.kubernetes.io/healthcheck-path"         = "/"
-      "alb.ingress.kubernetes.io/healthcheck-port"         = "3000"
-      "alb.ingress.kubernetes.io/tags"                     = "Environment=${var.environment},Project=${var.project_name}"
-    }
+    annotations = merge(
+      {
+        "kubernetes.io/ingress.class"                = "alb"
+        "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
+        "alb.ingress.kubernetes.io/target-type"      = "ip"
+        "alb.ingress.kubernetes.io/security-groups"  = aws_security_group.alb.id
+        "alb.ingress.kubernetes.io/healthcheck-path" = "/"
+        "alb.ingress.kubernetes.io/healthcheck-port" = "3000"
+        "alb.ingress.kubernetes.io/tags"             = "Environment=${var.environment},Project=${var.project_name}"
+      },
+      var.environment != "dev" && var.domain_name != "" && var.acm_certificate_arn != "" ? {
+        "alb.ingress.kubernetes.io/certificate-arn" = var.acm_certificate_arn
+        "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+        "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+        "alb.ingress.kubernetes.io/actions.ssl-redirect" = jsonencode({
+          Type = "redirect"
+          RedirectConfig = {
+            Protocol   = "HTTPS"
+            Port       = "443"
+            StatusCode = "HTTP_301"
+          }
+        })
+        } : {
+        "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}]"
+      }
+    )
 
     labels = {
       app         = "react-frontend"
@@ -199,17 +244,42 @@ resource "kubernetes_ingress_v1" "react_frontend" {
   }
 
   spec {
-    rule {
-      host = "shop.${var.domain_name}"
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "react-frontend"
-              port {
-                number = 3000
+    # Rule with custom domain (QA/Prod only)
+    dynamic "rule" {
+      for_each = var.environment != "dev" && var.domain_name != "" ? [1] : []
+      content {
+        host = "shop.${var.domain_name}"
+        http {
+          path {
+            path      = "/"
+            path_type = "Prefix"
+            backend {
+              service {
+                name = "react-frontend"
+                port {
+                  number = 3000
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    # Rule without custom domain (Dev only - uses ALB DNS)
+    dynamic "rule" {
+      for_each = var.environment == "dev" || var.domain_name == "" ? [1] : []
+      content {
+        http {
+          path {
+            path      = "/"
+            path_type = "Prefix"
+            backend {
+              service {
+                name = "react-frontend"
+                port {
+                  number = 3000
+                }
               }
             }
           }

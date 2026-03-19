@@ -38,8 +38,8 @@ module "eks" {
   cluster_name    = var.eks_cluster_name
   cluster_version = var.eks_version
 
-  vpc_id             = module.vpc.vpc_id
-  subnet_ids         = module.vpc.private_subnets
+  vpc_id                   = module.vpc.vpc_id
+  subnet_ids               = module.vpc.private_subnets
   control_plane_subnet_ids = concat(module.vpc.private_subnets, module.vpc.public_subnets)
 
   cluster_endpoint_public_access  = var.eks_endpoint_public_access

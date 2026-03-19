@@ -29,19 +29,19 @@ module "vpc" {
 
   # EKS subnet tags required for ALB and node discovery
   public_subnet_tags = {
-    "kubernetes.io/role/elb"                                        = "1"
+    "kubernetes.io/role/elb"                                       = "1"
     "kubernetes.io/cluster/${var.project_name}-${var.environment}" = "shared"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/role/internal-elb"                               = "1"
+    "kubernetes.io/role/internal-elb"                              = "1"
     "kubernetes.io/cluster/${var.project_name}-${var.environment}" = "shared"
   }
 
   # VPC Flow Logs
-  enable_flow_log                      = true
-  create_flow_log_cloudwatch_iam_role  = true
-  create_flow_log_cloudwatch_log_group = true
+  enable_flow_log                                 = true
+  create_flow_log_cloudwatch_iam_role             = true
+  create_flow_log_cloudwatch_log_group            = true
   flow_log_cloudwatch_log_group_retention_in_days = var.cloudwatch_log_retention_days
 
   tags = merge(var.common_tags, {

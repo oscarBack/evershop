@@ -88,12 +88,12 @@ module "rds" {
   db_subnet_group_name   = module.vpc.database_subnet_group_name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
-  backup_retention_period = var.rds_backup_retention_period
-  backup_window           = "03:00-04:00"
-  maintenance_window      = "sun:04:00-sun:05:00"
-  skip_final_snapshot     = var.environment == "dev" ? true : false
+  backup_retention_period   = var.rds_backup_retention_period
+  backup_window             = "03:00-04:00"
+  maintenance_window        = "sun:04:00-sun:05:00"
+  skip_final_snapshot       = var.environment == "dev" ? true : false
   final_snapshot_identifier = var.environment != "dev" ? "${var.project_name}-final-${var.environment}" : null
-  deletion_protection     = var.environment == "prod" ? true : false
+  deletion_protection       = var.environment == "prod" ? true : false
 
   monitoring_interval = 60
   monitoring_role_arn = aws_iam_role.rds_monitoring.arn

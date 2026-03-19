@@ -24,8 +24,9 @@ rds_backup_retention_period = 7
 
 cloudwatch_log_retention_days = 7
 
-domain_name         = "dev.evershop.example.com"
-acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
+# Dev environment uses ALB DNS directly - no custom domain or ACM certificate
+domain_name         = ""
+acm_certificate_arn = ""
 
 common_tags = {
   ManagedBy    = "Terraform"
