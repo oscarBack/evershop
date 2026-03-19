@@ -16,19 +16,33 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.10"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
   }
 
   backend "s3" {
-    # Backend configuration will be provided via environment-specific workspaces
+    bucket         = "evershop-terraform-state"
+    key            = "eks-deployment/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "evershop-terraform-locks"
   }
 }
 
 provider "aws" {
   region = var.aws_region
+
   default_tags {
     tags = merge(var.common_tags, {
       Project     = var.project_name
-      Environment = terraform.workspace
+      Environment = var.environment
+      ManagedBy   = "terraform"
     })
   }
 }

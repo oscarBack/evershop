@@ -1,63 +1,41 @@
 # infra-evershop
 
-Infrastructure repository for EverShop EKS deployment.
+Infrastructure repository for EverShop on AWS EKS.
 
-## Overview
+## Structure
 
-This repository contains Terraform configuration for deploying and managing the EverShop e-commerce platform on AWS EKS.
-
-## Architecture
-
-- **EKS**: Kubernetes cluster for container orchestration
-- **RDS**: PostgreSQL database for application data
-- **Security Groups**: Network security configuration
-- **VPC**: Virtual private cloud networking
-
-## Environments
-
-| Environment | Workspace | Account |
-|-------------|-----------|---------|
-| Development | dev | evershop-dev |
-| QA | qa | evershop-qa |
-| Production | prod | evershop-prod |
-
-## Prerequisites
-
-- Terraform >= 1.5.0
-- AWS CLI configured with SSO
-- Atlantis (for PR automation)
+```
+infra-evershop/
+└── eks-deployment/       # EKS cluster, RDS, VPC, IAM, networking
+    ├── atlantis.yaml
+    ├── makefile
+    ├── providers.tf
+    ├── variables.tf
+    ├── data.tf
+    ├── vpc.tf
+    ├── eks.tf
+    ├── rds.tf
+    ├── security_groups.tf
+    ├── iam.tf
+    ├── outputs.tf
+    ├── dev.hcl
+    ├── qa.hcl
+    └── prod.hcl
+```
 
 ## Quick Start
 
-### Development Environment
-
 ```bash
-make tf-dev
+cd eks-deployment
+make tf-dev    # plan dev
+make tf-qa     # plan qa
+make tf-prod   # plan prod
 ```
 
-### QA Environment
+## Atlantis
 
-```bash
-make tf-qa
 ```
-
-### Production Environment
-
-```bash
-make tf-prod
+atlantis plan -p evershop-eks-dev
+atlantis plan -p evershop-eks-qa
+atlantis plan -p evershop-eks-prod
 ```
-
-## Atlantis Commands
-
-In PR comments, use:
-
-- `atlantis plan -p evershop-{env}` - Plan infrastructure changes
-- `atlantis apply -p evershop-{env}` - Apply infrastructure changes
-
-## Terraform Modules
-
-This project uses shared Terraform modules from the organization registry.
-
-## License
-
-This project is proprietary software.
