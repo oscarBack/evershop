@@ -405,11 +405,8 @@
 
             <!-- NAT Gateways -->
             <div class="component network" data-id="nat1" style="left: 450px; top: 160px;">
-                <div class="component-title">NAT Gateway AZ1</div>
-            </div>
-
-            <div class="component network" data-id="nat2" style="left: 620px; top: 160px;">
-                <div class="component-title">NAT Gateway AZ2</div>
+                <div class="component-title">NAT Gateway</div>
+                <div class="component-subtitle">Single NAT (Dev)</div>
             </div>
 
             <!-- EKS Control Plane -->
@@ -419,38 +416,33 @@
             </div>
 
             <!-- Worker Nodes -->
-            <div class="component compute" data-id="node1" style="left: 150px; top: 520px;">
+            <div class="component compute" data-id="node1" style="left: 150px; top: 520px; width: 140px; height: 200px;">
                 <div class="component-title">Worker Node 1</div>
                 <div class="component-subtitle">t3.medium</div>
             </div>
 
-            <div class="component compute" data-id="node2" style="left: 320px; top: 520px;">
+            <div class="component compute" data-id="node2" style="left: 320px; top: 520px; width: 140px; height: 200px;">
                 <div class="component-title">Worker Node 2</div>
                 <div class="component-subtitle">t3.medium</div>
             </div>
 
-            <div class="component compute" data-id="node3" style="left: 490px; top: 520px;">
-                <div class="component-title">Worker Node N</div>
-                <div class="component-subtitle">t3.medium</div>
-            </div>
-
-            <!-- Pods -->
-            <div class="component compute" data-id="graphql1" style="left: 150px; top: 640px;">
+            <!-- Pods (inside worker nodes) -->
+            <div class="component compute" data-id="graphql1" style="left: 160px; top: 540px; width: 120px; height: 80px;">
                 <div class="component-title">GraphQL Pod 1</div>
                 <div class="component-subtitle">Port: 4000</div>
             </div>
 
-            <div class="component compute" data-id="graphql2" style="left: 320px; top: 640px;">
+            <div class="component compute" data-id="graphql2" style="left: 330px; top: 540px; width: 120px; height: 80px;">
                 <div class="component-title">GraphQL Pod 2</div>
                 <div class="component-subtitle">Port: 4000</div>
             </div>
 
-            <div class="component compute" data-id="frontend1" style="left: 490px; top: 640px;">
+            <div class="component compute" data-id="frontend1" style="left: 160px; top: 630px; width: 120px; height: 80px;">
                 <div class="component-title">Frontend Pod 1</div>
                 <div class="component-subtitle">Port: 3000</div>
             </div>
 
-            <div class="component compute" data-id="frontend2" style="left: 660px; top: 640px;">
+            <div class="component compute" data-id="frontend2" style="left: 330px; top: 630px; width: 120px; height: 80px;">
                 <div class="component-title">Frontend Pod 2</div>
                 <div class="component-subtitle">Port: 3000</div>
             </div>
@@ -464,7 +456,7 @@
             <!-- RDS -->
             <div class="component database" data-id="rds" style="left: 1100px; top: 520px;">
                 <div class="component-title">RDS PostgreSQL</div>
-                <div class="component-subtitle">Multi-AZ, Encrypted</div>
+                <div class="component-subtitle">db.t3.micro, 20GB</div>
             </div>
 
             <!-- AWS Services (outside VPC) -->
@@ -554,25 +546,15 @@
                 }
             },
             'nat1': {
-                title: 'NAT Gateway AZ1',
+                title: 'NAT Gateway',
                 category: 'network',
                 description: 'Network Address Translation gateway for outbound internet access',
                 details: {
                     'Purpose': 'Allows private subnet resources to access internet',
-                    'Availability': ['Single NAT in Dev (cost optimization)', 'One per AZ in QA/Prod (high availability)'],
+                    'Availability': 'Single NAT in Dev (cost optimization - saves ~$32/month)',
                     'Use Cases': ['EKS nodes pulling container images', 'Pods accessing external APIs', 'Software updates and patches'],
-                    'Cost': 'Charged per hour + data processing'
-                }
-            },
-            'nat2': {
-                title: 'NAT Gateway AZ2',
-                category: 'network',
-                description: 'NAT Gateway in second availability zone',
-                details: {
-                    'Purpose': 'High availability for outbound internet access',
-                    'Deployment': 'QA and Production environments only',
-                    'Failover': 'Automatic if AZ1 fails',
-                    'Configuration': 'Disabled in Dev environment'
+                    'Cost': 'Charged per hour + data processing',
+                    'High Availability': 'One per AZ in QA/Prod environments'
                 }
             },
             'control-plane': {
@@ -597,12 +579,12 @@
                 details: {
                     'Instance Type': 't3.medium (2 vCPU, 4GB RAM)',
                     'AMI': 'Amazon Linux 2 (AL2_x86_64)',
-                    'Disk': '20GB gp3 storage',
+                    'Disk': '50GB gp3 storage',
                     'Networking': 'Private subnet with NAT gateway',
                     'IAM Role': ['AmazonEKSWorkerNodePolicy', 'AmazonEKS_CNI_Policy', 'AmazonEC2ContainerRegistryReadOnly'],
                     'Security': 'Protected by EKS Nodes Security Group',
                     'Workloads': 'Hosts GraphQL and Frontend pods',
-                    'Auto Scaling': 'Part of managed node group (2-4 nodes)'
+                    'Auto Scaling': 'Part of managed node group (2-4 nodes in dev)'
                 }
             },
             'node2': {
@@ -615,16 +597,6 @@
                     'Availability Zone': 'Different AZ from Node 1',
                     'Configuration': 'Identical to Node 1',
                     'Pod Distribution': 'Kubernetes scheduler distributes pods across nodes'
-                }
-            },
-            'node3': {
-                title: 'Worker Node N',
-                category: 'compute',
-                description: 'Additional worker nodes for scaling',
-                details: {
-                    'Scaling': 'Auto-scales based on demand (up to 4 nodes)',
-                    'Purpose': 'Handles increased workload during peak traffic',
-                    'Configuration': 'Same as other nodes in the group'
                 }
             },
             'graphql1': {
@@ -696,10 +668,10 @@
                 category: 'data',
                 description: 'Managed PostgreSQL database for EverShop',
                 details: {
-                    'Engine': 'PostgreSQL 14+',
-                    'Instance Class': 'db.t3.medium (configurable)',
-                    'Storage': ['Type: gp3', 'Size: 20GB (configurable)', 'Encrypted with KMS'],
-                    'High Availability': 'Multi-AZ deployment in QA/Prod',
+                    'Engine': 'PostgreSQL 15.4',
+                    'Instance Class': 'db.t3.micro (Dev environment)',
+                    'Storage': ['Type: gp3', 'Size: 20GB', 'Encrypted with KMS'],
+                    'High Availability': 'Single-AZ in Dev (Multi-AZ in QA/Prod)',
                     'Backups': ['Automated daily backups', 'Retention: 7 days', 'Window: 03:00-04:00 UTC'],
                     'Maintenance': 'Sunday 04:00-05:00 UTC',
                     'Monitoring': 'Enhanced monitoring (60s interval)',
@@ -835,7 +807,6 @@
             { from: 'alb', to: 'frontend2', type: 'traffic' },
             { from: 'control-plane', to: 'node1', type: 'management' },
             { from: 'control-plane', to: 'node2', type: 'management' },
-            { from: 'control-plane', to: 'node3', type: 'management' },
             { from: 'graphql1', to: 'rds', type: 'data' },
             { from: 'graphql2', to: 'rds', type: 'data' },
             { from: 'node1', to: 'ecr', type: 'data' },
