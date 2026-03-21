@@ -238,24 +238,74 @@ aws eks update-kubeconfig --name evershop-cluster --region us-east-1
 - Use private endpoint access for production clusters
 - Regularly update Kubernetes version and node group AMI
 
+## Cluster Health Verification
+
+After deploying the EKS cluster, verify its health and operational status:
+
+### Automated Verification
+
+**PowerShell (Windows):**
+```powershell
+.\scripts\Verify-EKSHealth.ps1 -Environment dev
+```
+
+**Bash (Linux/Mac):**
+```bash
+./scripts/verify-eks-health.sh dev
+```
+
+### Quick Manual Checks
+
+```bash
+# 1. Check cluster status
+aws eks describe-cluster --name evershop-cluster --region us-east-1 --profile aws-evershop-dev --query 'cluster.status'
+
+# 2. Update kubeconfig
+aws eks update-kubeconfig --name evershop-cluster --region us-east-1 --profile aws-evershop-dev
+
+# 3. Check nodes
+kubectl get nodes
+
+# 4. Check system pods
+kubectl get pods -n kube-system
+
+# 5. Test connectivity
+kubectl cluster-info
+```
+
+### Verification Documentation
+
+- **[VERIFICATION.md](./VERIFICATION.md)** - Comprehensive verification guide with detailed steps
+- **[QUICK_VERIFICATION.md](./QUICK_VERIFICATION.md)** - Quick reference card for common checks
+
+### Expected Results
+
+✅ **Healthy Cluster:**
+- Cluster status: `ACTIVE`
+- All nodes: `Ready`
+- All system pods: `Running`
+- kubectl connectivity: Working
+- Control plane logs: Enabled (5 types)
+- OIDC provider: Configured
+
 ## Troubleshooting
 
 ### Check EKS Cluster Status
 
 ```bash
-aws eks describe-cluster --name evershop-cluster --region us-east-1
+aws eks describe-cluster --name evershop-cluster --region us-east-1 --profile aws-evershop-dev
 ```
 
 ### View Node Group Status
 
 ```bash
-aws eks describe-nodegroup --cluster-name evershop-cluster --nodegroup-name evershop-ng --region us-east-1
+aws eks describe-nodegroup --cluster-name evershop-cluster --nodegroup-name evershop-ng --region us-east-1 --profile aws-evershop-dev
 ```
 
 ### Check RDS Status
 
 ```bash
-aws rds describe-db-instances --db-instance-identifier evershop-db --region us-east-1
+aws rds describe-db-instances --db-instance-identifier evershop-db --region us-east-1 --profile aws-evershop-dev
 ```
 
 ### View Terraform State
@@ -263,6 +313,17 @@ aws rds describe-db-instances --db-instance-identifier evershop-db --region us-e
 ```bash
 terraform state list
 ```
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| AWS credentials expired | Run `aws sso login --profile aws-evershop-dev` |
+| kubectl cannot connect | Run `aws eks update-kubeconfig --name evershop-cluster --region us-east-1 --profile aws-evershop-dev` |
+| Nodes not ready | Check node group status and CloudWatch logs |
+| System pods not running | Check pod events with `kubectl describe pod <pod-name> -n kube-system` |
+
+For detailed troubleshooting, see [VERIFICATION.md](./VERIFICATION.md#troubleshooting)
 
 ## License
 

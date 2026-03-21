@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rds-connectivity-test
+  namespace: default
+  labels:
+    app: rds-test
+spec:
+  serviceAccountName: default
+  containers:
+  - name: postgres-client
+    image: postgres:15-alpine
+    command:
+      - sleep
+      - "3600"
+    env:
+    - name: PGHOST
+      value: "REPLACE_WITH_RDS_ENDPOINT"
+    - name: PGPORT
+      value: "5432"
+    - name: PGDATABASE
+      value: "evershop"
+    - name: PGUSER
+      value: "evershop_admin"
+    - name: PGPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: rds-credentials
+          key: password
+          optional: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+  restartPolicy: Never
