@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EverShop EKS Architecture - Interactive Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #232F3E 0%, #131A22 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #333;
+        }
+
+        .diagram-container {
+            padding: 40px;
+            position: relative;
+            min-height: 800px;
+            background: #fafbfc;
+        }
+
+        .component {
+            position: absolute;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 0.9em;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .component:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .component.active {
+            transform: scale(1.1);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+            z-index: 101;
+        }
+
+        .component-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1em;
+        }
+
+        .component-subtitle {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        /* Component Types */
+        .aws-service {
+            background: #FF9900;
+            border-color: #232F3E;
+            color: white;
+        }
+
+        .eks-component {
+            background: #326CE5;
+            border-color: #1a4d9e;
+            color: white;
+        }
+
+        .compute {
+            background: #3F8624;
+            border-color: #2d6119;
+            color: white;
+        }
+
+        .database {
+            background: #527FFF;
+            border-color: #2d5acc;
+            color: white;
+        }
+
+        .security {
+            background: #DD344C;
+            border-color: #a82535;
+            color: white;
+        }
+
+        .network {
+            background: #8C4FFF;
+            border-color: #6b2ecc;
+            color: white;
+        }
+
+        .container-box {
+            position: absolute;
+            border: 3px dashed #6c757d;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.5);
+            padding: 20px;
+        }
+
+        .container-label {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #6c757d;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: #495057;
+            transform-origin: left center;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connection.active {
+            background: #FF9900;
+            height: 3px;
+            z-index: 99;
+        }
+
+        .connection::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid #495057;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+
+        .connection.active::after {
+            border-left-color: #FF9900;
+        }
+
+        .info-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .info-panel.open {
+            right: 0;
+        }
+
+        .info-header {
+            background: #232F3E;
+            color: white;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .info-header h2 {
+            margin-bottom: 5px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .info-content {
+            padding: 20px;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            color: #232F3E;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #FF9900;
+            padding-bottom: 5px;
+        }
+
+        .info-section p, .info-section ul {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul {
+            padding-left: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin: 2px;
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #6c757d;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9em;
+        }
+
+        .filter-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .filter-btn.active {
+            background: #232F3E;
+            color: white;
+            border-color: #232F3E;
+        }
+
+        @media (max-width: 768px) {
+            .info-panel {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .diagram-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ EverShop EKS Architecture</h1>
+            <p>Interactive Infrastructure Diagram - Click components for details</p>
+        </div>
+
+        <div class="controls">
+            <div class="legend">
+                <strong>Legend:</strong>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF9900;"></div>
+                    <span>AWS Services</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #326CE5;"></div>
+                    <span>EKS</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3F8624;"></div>
+                    <span>Compute</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #527FFF;"></div>
+                    <span>Database</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #DD344C;"></div>
+                    <span>Security</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #8C4FFF;"></div>
+                    <span>Network</span>
+                </div>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="network">Network</button>
+                <button class="filter-btn" data-filter="compute">Compute</button>
+                <button class="filter-btn" data-filter="data">Data</button>
+                <button class="filter-btn" data-filter="security">Security</button>
+            </div>
+        </div>
+
+        <div class="diagram-container" id="diagram">
+            <!-- VPC Container -->
+            <div class="container-box" style="left: 50px; top: 100px; width: 1400px; height: 650px;">
+                <div class="container-label">VPC (10.0.0.0/16)</div>
+
+                <!-- Public Subnets -->
+                <div class="container-box" style="left: 20px; top: 40px; width: 400px; height: 180px; border-color: #28a745;">
+                    <div class="container-label" style="background: #28a745;">Public Subnets</div>
+                </div>
+
+                <!-- Private Subnets -->
+                <div class="container-box" style="left: 20px; top: 240px; width: 900px; height: 360px; border-color: #17a2b8;">
+                    <div class="container-label" style="background: #17a2b8;">Private Subnets</div>
+                    
+                    <!-- EKS Cluster -->
+                    <div class="container-box" style="left: 20px; top: 40px; width: 850px; height: 280px; border-color: #326CE5;">
+                        <div class="container-label" style="background: #326CE5;">EKS Cluster</div>
+                    </div>
+                </div>
+
+                <!-- Database Subnets -->
+                <div class="container-box" style="left: 950px; top: 240px; width: 400px; height: 360px; border-color: #6f42c1;">
+                    <div class="container-label" style="background: #6f42c1;">Database Subnets</div>
+                </div>
+            </div>
+
+            <!-- Internet Users -->
+            <div class="component network" data-id="users" style="left: 50px; top: 20px;">
+                <div class="component-title">🌐 Internet Users</div>
+            </div>
+
+            <!-- ALB -->
+            <div class="component network" data-id="alb" style="left: 250px; top: 160px;">
+                <div class="component-title">Application Load Balancer</div>
+                <div class="component-subtitle">HTTP:80 / HTTPS:443</div>
+            </div>
+
+            <!-- NAT Gateways -->
+            <div class="component network" data-id="nat1" style="left: 450px; top: 160px;">
+                <div class="component-title">NAT Gateway AZ1</div>
+            </div>
+
+            <div class="component network" data-id="nat2" style="left: 620px; top: 160px;">
+                <div class="component-title">NAT Gateway AZ2</div>
+            </div>
+
+            <!-- EKS Control Plane -->
+            <div class="component eks-component" data-id="control-plane" style="left: 150px; top: 400px;">
+                <div class="component-title">EKS Control Plane</div>
+                <div class="component-subtitle">v1.28+</div>
+            </div>
+
+            <!-- Worker Nodes -->
+            <div class="component compute" data-id="node1" style="left: 150px; top: 520px;">
+                <div class="component-title">Worker Node 1</div>
+                <div class="component-subtitle">t3.medium</div>
+            </div>
+
+            <div class="component compute" data-id="node2" style="left: 320px; top: 520px;">
+                <div class="component-title">Worker Node 2</div>
+                <div class="component-subtitle">t3.medium</div>
+            </div>
+
+            <div class="component compute" data-id="node3" style="left: 490px; top: 520px;">
+                <div class="component-title">Worker Node N</div>
+                <div class="component-subtitle">t3.medium</div>
+            </div>
+
+            <!-- Pods -->
+            <div class="component compute" data-id="graphql1" style="left: 150px; top: 640px;">
+                <div class="component-title">GraphQL Pod 1</div>
+                <div class="component-subtitle">Port: 4000</div>
+            </div>
+
+            <div class="component compute" data-id="graphql2" style="left: 320px; top: 640px;">
+                <div class="component-title">GraphQL Pod 2</div>
+                <div class="component-subtitle">Port: 4000</div>
+            </div>
+
+            <div class="component compute" data-id="frontend1" style="left: 490px; top: 640px;">
+                <div class="component-title">Frontend Pod 1</div>
+                <div class="component-subtitle">Port: 3000</div>
+            </div>
+
+            <div class="component compute" data-id="frontend2" style="left: 660px; top: 640px;">
+                <div class="component-title">Frontend Pod 2</div>
+                <div class="component-subtitle">Port: 3000</div>
+            </div>
+
+            <!-- Load Balancer Controller -->
+            <div class="component eks-component" data-id="lbc" style="left: 820px; top: 520px;">
+                <div class="component-title">AWS LB Controller</div>
+                <div class="component-subtitle">Helm v1.6.2</div>
+            </div>
+
+            <!-- RDS -->
+            <div class="component database" data-id="rds" style="left: 1100px; top: 520px;">
+                <div class="component-title">RDS PostgreSQL</div>
+                <div class="component-subtitle">Multi-AZ, Encrypted</div>
+            </div>
+
+            <!-- AWS Services (outside VPC) -->
+            <div class="component aws-service" data-id="ecr" style="left: 1100px; top: 20px;">
+                <div class="component-title">Amazon ECR</div>
+                <div class="component-subtitle">Container Registry</div>
+            </div>
+
+            <div class="component aws-service" data-id="secrets" style="left: 1280px; top: 20px;">
+                <div class="component-title">Secrets Manager</div>
+                <div class="component-subtitle">RDS Password</div>
+            </div>
+
+            <div class="component aws-service" data-id="kms-eks" style="left: 1100px; top: 120px;">
+                <div class="component-title">KMS Key (EKS)</div>
+                <div class="component-subtitle">Secrets Encryption</div>
+            </div>
+
+            <div class="component aws-service" data-id="kms-rds" style="left: 1280px; top: 120px;">
+                <div class="component-title">KMS Key (RDS)</div>
+                <div class="component-subtitle">Storage Encryption</div>
+            </div>
+
+            <div class="component aws-service" data-id="cloudwatch" style="left: 1100px; top: 220px;">
+                <div class="component-title">CloudWatch Logs</div>
+                <div class="component-subtitle">Monitoring & Logs</div>
+            </div>
+
+            <div class="component aws-service" data-id="iam" style="left: 1280px; top: 220px;">
+                <div class="component-title">IAM Roles</div>
+                <div class="component-subtitle">IRSA & Permissions</div>
+            </div>
+
+            <!-- Security Groups -->
+            <div class="component security" data-id="sg-alb" style="left: 50px; top: 800px;">
+                <div class="component-title">ALB Security Group</div>
+                <div class="component-subtitle">80, 443</div>
+            </div>
+
+            <div class="component security" data-id="sg-eks" style="left: 250px; top: 800px;">
+                <div class="component-title">EKS Nodes SG</div>
+                <div class="component-subtitle">443, 10250</div>
+            </div>
+
+            <div class="component security" data-id="sg-rds" style="left: 450px; top: 800px;">
+                <div class="component-title">RDS Security Group</div>
+                <div class="component-subtitle">5432</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel" id="infoPanel">
+        <div class="info-header">
+            <h2 id="infoTitle">Component Details</h2>
+            <button class="close-btn" onclick="closeInfo()">×</button>
+        </div>
+        <div class="info-content" id="infoContent">
+            <p>Click on any component to see detailed information</p>
+        </div>
+    </div>
+
+    <script>
+        // Component data
+        const componentData = {
+            'users': {
+                title: '🌐 Internet Users',
+                category: 'network',
+                description: 'External users accessing the EverShop application',
+                details: {
+                    'Access Methods': ['Web Browser (HTTP/HTTPS)', 'Mobile Applications', 'API Clients'],
+                    'Traffic Flow': ['Users → ALB → EKS Pods', 'HTTPS recommended for production', 'HTTP redirects to HTTPS in QA/Prod']
+                }
+            },
+            'alb': {
+                title: 'Application Load Balancer',
+                category: 'network',
+                description: 'AWS Application Load Balancer for distributing traffic to EKS pods',
+                details: {
+                    'Listeners': ['HTTP: Port 80', 'HTTPS: Port 443 (QA/Prod with ACM)'],
+                    'Target Type': 'IP (direct to pod IPs)',
+                    'Health Checks': ['GraphQL API: /health on port 4000', 'Frontend: / on port 3000'],
+                    'SSL/TLS': ['ACM certificate for custom domains', 'HTTP to HTTPS redirect (301) in QA/Prod'],
+                    'Routing': ['api.domain.com → GraphQL API', 'shop.domain.com → React Frontend', 'Dev: ALB DNS with path-based routing'],
+                    'Security': 'Protected by ALB Security Group',
+                    'Terraform': 'Managed by AWS Load Balancer Controller via Kubernetes Ingress'
+                }
+            },
+            'nat1': {
+                title: 'NAT Gateway AZ1',
+                category: 'network',
+                description: 'Network Address Translation gateway for outbound internet access',
+                details: {
+                    'Purpose': 'Allows private subnet resources to access internet',
+                    'Availability': ['Single NAT in Dev (cost optimization)', 'One per AZ in QA/Prod (high availability)'],
+                    'Use Cases': ['EKS nodes pulling container images', 'Pods accessing external APIs', 'Software updates and patches'],
+                    'Cost': 'Charged per hour + data processing'
+                }
+            },
+            'nat2': {
+                title: 'NAT Gateway AZ2',
+                category: 'network',
+                description: 'NAT Gateway in second availability zone',
+                details: {
+                    'Purpose': 'High availability for outbound internet access',
+                    'Deployment': 'QA and Production environments only',
+                    'Failover': 'Automatic if AZ1 fails',
+                    'Configuration': 'Disabled in Dev environment'
+                }
+            },
+            'control-plane': {
+                title: 'EKS Control Plane',
+                category: 'compute',
+                description: 'AWS-managed Kubernetes control plane',
+                details: {
+                    'Version': 'Kubernetes 1.28+ (configurable)',
+                    'Management': 'Fully managed by AWS',
+                    'High Availability': 'Multi-AZ deployment (3 AZs)',
+                    'Components': ['API Server', 'etcd', 'Controller Manager', 'Scheduler'],
+                    'Logging': ['API server logs', 'Audit logs', 'Authenticator logs', 'Controller manager logs', 'Scheduler logs'],
+                    'Encryption': 'Secrets encrypted with KMS',
+                    'Access': ['Public endpoint (configurable)', 'Private endpoint enabled'],
+                    'Terraform Module': 'aws_eks/ec2 v1.4.5'
+                }
+            },
+            'node1': {
+                title: 'Worker Node 1',
+                category: 'compute',
+                description: 'EKS worker node running containerized workloads',
+                details: {
+                    'Instance Type': 't3.medium (2 vCPU, 4GB RAM)',
+                    'AMI': 'Amazon Linux 2 (AL2_x86_64)',
+                    'Disk': '20GB gp3 storage',
+                    'Networking': 'Private subnet with NAT gateway',
+                    'IAM Role': ['AmazonEKSWorkerNodePolicy', 'AmazonEKS_CNI_Policy', 'AmazonEC2ContainerRegistryReadOnly'],
+                    'Security': 'Protected by EKS Nodes Security Group',
+                    'Workloads': 'Hosts GraphQL and Frontend pods',
+                    'Auto Scaling': 'Part of managed node group (2-4 nodes)'
+                }
+            },
+            'node2': {
+                title: 'Worker Node 2',
+                category: 'compute',
+                description: 'EKS worker node for high availability',
+                details: {
+                    'Instance Type': 't3.medium (2 vCPU, 4GB RAM)',
+                    'Purpose': 'Provides redundancy and load distribution',
+                    'Availability Zone': 'Different AZ from Node 1',
+                    'Configuration': 'Identical to Node 1',
+                    'Pod Distribution': 'Kubernetes scheduler distributes pods across nodes'
+                }
+            },
+            'node3': {
+                title: 'Worker Node N',
+                category: 'compute',
+                description: 'Additional worker nodes for scaling',
+                details: {
+                    'Scaling': 'Auto-scales based on demand (up to 4 nodes)',
+                    'Purpose': 'Handles increased workload during peak traffic',
+                    'Configuration': 'Same as other nodes in the group'
+                }
+            },
+            'graphql1': {
+                title: 'GraphQL API Pod 1',
+                category: 'compute',
+                description: 'EverShop GraphQL API container',
+                details: {
+                    'Port': '4000',
+                    'Image': 'ECR: evershop-graphql-api',
+                    'Health Check': '/health endpoint',
+                    'Database': 'Connects to RDS PostgreSQL on port 5432',
+                    'Secrets': 'Fetches RDS credentials from Secrets Manager',
+                    'Logging': 'Sends logs to CloudWatch',
+                    'Replicas': 'Minimum 2 for high availability',
+                    'Resources': ['CPU: 500m request, 1000m limit', 'Memory: 512Mi request, 1Gi limit']
+                }
+            },
+            'graphql2': {
+                title: 'GraphQL API Pod 2',
+                category: 'compute',
+                description: 'GraphQL API replica for load distribution',
+                details: {
+                    'Purpose': 'Provides redundancy and handles concurrent requests',
+                    'Configuration': 'Identical to GraphQL Pod 1',
+                    'Load Balancing': 'ALB distributes traffic across all healthy pods'
+                }
+            },
+            'frontend1': {
+                title: 'React Frontend Pod 1',
+                category: 'compute',
+                description: 'EverShop React frontend application',
+                details: {
+                    'Port': '3000',
+                    'Image': 'ECR: evershop-react-frontend',
+                    'Health Check': '/ endpoint',
+                    'Technology': 'React with Server-Side Rendering',
+                    'API Communication': 'Calls GraphQL API internally',
+                    'Logging': 'Sends logs to CloudWatch',
+                    'Replicas': 'Minimum 2 for high availability'
+                }
+            },
+            'frontend2': {
+                title: 'React Frontend Pod 2',
+                category: 'compute',
+                description: 'Frontend replica for high availability',
+                details: {
+                    'Purpose': 'Handles concurrent user sessions',
+                    'Configuration': 'Identical to Frontend Pod 1',
+                    'Session Management': 'Stateless design for horizontal scaling'
+                }
+            },
+            'lbc': {
+                title: 'AWS Load Balancer Controller',
+                category: 'compute',
+                description: 'Kubernetes controller for managing AWS ALBs',
+                details: {
+                    'Version': 'Helm chart 1.6.2',
+                    'Namespace': 'kube-system',
+                    'Purpose': 'Automatically creates and manages ALBs based on Ingress resources',
+                    'IRSA': 'Uses IAM Roles for Service Accounts',
+                    'Permissions': 'Can create/modify/delete ALBs, target groups, listeners',
+                    'Replicas': '2 for high availability',
+                    'Resources': ['CPU: 100m request, 200m limit', 'Memory: 128Mi request, 256Mi limit'],
+                    'Terraform Module': 'aws_eks/microservice v3.0.0'
+                }
+            },
+            'rds': {
+                title: 'RDS PostgreSQL',
+                category: 'data',
+                description: 'Managed PostgreSQL database for EverShop',
+                details: {
+                    'Engine': 'PostgreSQL 14+',
+                    'Instance Class': 'db.t3.medium (configurable)',
+                    'Storage': ['Type: gp3', 'Size: 20GB (configurable)', 'Encrypted with KMS'],
+                    'High Availability': 'Multi-AZ deployment in QA/Prod',
+                    'Backups': ['Automated daily backups', 'Retention: 7 days', 'Window: 03:00-04:00 UTC'],
+                    'Maintenance': 'Sunday 04:00-05:00 UTC',
+                    'Monitoring': 'Enhanced monitoring (60s interval)',
+                    'Logs': ['PostgreSQL logs to CloudWatch', 'Upgrade logs to CloudWatch'],
+                    'Security': ['Private subnet only', 'RDS Security Group (port 5432)', 'Password in Secrets Manager'],
+                    'Terraform Module': 'aws_rds/db/postgres v2.0.0'
+                }
+            },
+            'ecr': {
+                title: 'Amazon ECR',
+                category: 'data',
+                description: 'Container image registry',
+                details: {
+                    'Repositories': ['evershop-graphql-api', 'evershop-react-frontend'],
+                    'Encryption': 'AES256',
+                    'Image Scanning': 'Enabled on push',
+                    'Lifecycle Policy': ['Keep last 10 tagged images', 'Remove untagged after 7 days'],
+                    'Access': 'EKS nodes pull images using IAM role',
+                    'Image Tags': 'Semantic versioning (v1.0.0, v1.0.1, etc.)'
+                }
+            },
+            'secrets': {
+                title: 'AWS Secrets Manager',
+                category: 'security',
+                description: 'Secure storage for sensitive data',
+                details: {
+                    'Stored Secrets': ['RDS master password (auto-generated 32 chars)', 'Database connection strings'],
+                    'Encryption': 'Encrypted at rest with AWS KMS',
+                    'Access': 'EKS pods via IAM roles',
+                    'Rotation': 'Manual rotation supported',
+                    'Recovery': '7-day recovery window on deletion',
+                    'Secret Path': '{project}/{environment}/rds-password'
+                }
+            },
+            'kms-eks': {
+                title: 'KMS Key (EKS)',
+                category: 'security',
+                description: 'Encryption key for Kubernetes secrets',
+                details: {
+                    'Purpose': 'Encrypts Kubernetes secrets at rest in etcd',
+                    'Key Rotation': 'Automatic annual rotation enabled',
+                    'Deletion Window': '7 days',
+                    'Alias': 'alias/{project}-eks-{environment}',
+                    'Permissions': 'EKS control plane has encrypt/decrypt access'
+                }
+            },
+            'kms-rds': {
+                title: 'KMS Key (RDS)',
+                category: 'security',
+                description: 'Encryption key for RDS storage',
+                details: {
+                    'Purpose': 'Encrypts RDS database storage and backups',
+                    'Key Rotation': 'Automatic annual rotation enabled',
+                    'Deletion Window': '7 days',
+                    'Alias': 'alias/{project}-rds-{environment}',
+                    'Scope': 'Encrypts data at rest, automated backups, snapshots'
+                }
+            },
+            'cloudwatch': {
+                title: 'CloudWatch Logs',
+                category: 'data',
+                description: 'Centralized logging and monitoring',
+                details: {
+                    'Log Groups': [
+                        '/aws/eks/{cluster}/cluster - EKS control plane',
+                        '/aws/eks/evershop-{env}/graphql-api',
+                        '/aws/eks/evershop-{env}/frontend',
+                        '/aws/eks/evershop-{env}/application',
+                        'VPC Flow Logs'
+                    ],
+                    'Retention': ['Dev: 7 days', 'QA: 14 days', 'Prod: 30 days'],
+                    'Features': ['Log aggregation', 'Search and filter', 'Metrics and alarms', 'Log insights queries'],
+                    'Integration': 'All components send logs automatically'
+                }
+            },
+            'iam': {
+                title: 'IAM Roles',
+                category: 'security',
+                description: 'Identity and access management',
+                details: {
+                    'EKS Cluster Role': ['AmazonEKSClusterPolicy', 'AmazonEKSVPCResourceController'],
+                    'EKS Node Role': ['AmazonEKSWorkerNodePolicy', 'AmazonEKS_CNI_Policy', 'AmazonEC2ContainerRegistryReadOnly'],
+                    'LB Controller Role (IRSA)': 'Custom policy for ALB management',
+                    'RDS Monitoring Role': 'AmazonRDSEnhancedMonitoringRole',
+                    'Best Practices': ['Least privilege principle', 'IRSA for pod-level permissions', 'No long-term credentials']
+                }
+            },
+            'sg-alb': {
+                title: 'ALB Security Group',
+                category: 'security',
+                description: 'Firewall rules for Application Load Balancer',
+                details: {
+                    'Ingress Rules': ['HTTP (80) from 0.0.0.0/0', 'HTTPS (443) from 0.0.0.0/0'],
+                    'Egress Rules': 'All ports to EKS Nodes Security Group',
+                    'Purpose': 'Allow internet traffic to ALB, restrict outbound to EKS only'
+                }
+            },
+            'sg-eks': {
+                title: 'EKS Nodes Security Group',
+                category: 'security',
+                description: 'Firewall rules for EKS worker nodes',
+                details: {
+                    'Ingress Rules': [
+                        'HTTPS (443) from ALB SG',
+                        'Kubelet (10250) from Control Plane SG',
+                        'DNS (53 TCP/UDP) from VPC CIDR',
+                        'Ephemeral ports (1024-65535) from self',
+                        'NodePort (30000-32767) from VPC CIDR'
+                    ],
+                    'Egress Rules': 'All traffic to 0.0.0.0/0',
+                    'Purpose': 'Secure node-to-node, control plane, and ALB communication'
+                }
+            },
+            'sg-rds': {
+                title: 'RDS Security Group',
+                category: 'security',
+                description: 'Firewall rules for RDS database',
+                details: {
+                    'Ingress Rules': 'PostgreSQL (5432) from EKS Nodes SG only',
+                    'Egress Rules': 'All denied (RDS does not initiate connections)',
+                    'Purpose': 'Restrict database access to EKS pods only',
+                    'Security': 'No direct internet access, private subnet only'
+                }
+            }
+        };
+
+        // Connection definitions
+        const connections = [
+            { from: 'users', to: 'alb', type: 'traffic' },
+            { from: 'alb', to: 'graphql1', type: 'traffic' },
+            { from: 'alb', to: 'graphql2', type: 'traffic' },
+            { from: 'alb', to: 'frontend1', type: 'traffic' },
+            { from: 'alb', to: 'frontend2', type: 'traffic' },
+            { from: 'control-plane', to: 'node1', type: 'management' },
+            { from: 'control-plane', to: 'node2', type: 'management' },
+            { from: 'control-plane', to: 'node3', type: 'management' },
+            { from: 'graphql1', to: 'rds', type: 'data' },
+            { from: 'graphql2', to: 'rds', type: 'data' },
+            { from: 'node1', to: 'ecr', type: 'data' },
+            { from: 'node2', to: 'ecr', type: 'data' },
+            { from: 'lbc', to: 'alb', type: 'management' }
+        ];
+
+        // Initialize
+        let activeComponent = null;
+        let activeFilter = 'all';
+
+        // Get component element position
+        function getComponentCenter(id) {
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if (!el) return null;
+            const rect = el.getBoundingClientRect();
+            const container = document.getElementById('diagram').getBoundingClientRect();
+            return {
+                x: rect.left - container.left + rect.width / 2,
+                y: rect.top - container.top + rect.height / 2
+            };
+        }
+
+        // Show component info
+        function showInfo(componentId) {
+            const data = componentData[componentId];
+            if (!data) return;
+
+            // Update active state
+            if (activeComponent) {
+                document.querySelector(`[data-id="${activeComponent}"]`).classList.remove('active');
+            }
+            activeComponent = componentId;
+            document.querySelector(`[data-id="${componentId}"]`).classList.add('active');
+
+            // Build info content
+            let html = `
+                <div class="info-section">
+                    <h3>Overview</h3>
+                    <p>${data.description}</p>
+                    <div>
+                        <span class="badge">${data.category}</span>
+                    </div>
+                </div>
+            `;
+
+            // Add details sections
+            for (const [key, value] of Object.entries(data.details)) {
+                html += `<div class="info-section"><h3>${key}</h3>`;
+                if (Array.isArray(value)) {
+                    html += '<ul>';
+                    value.forEach(item => {
+                        html += `<li>${item}</li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += `<p>${value}</p>`;
+                }
+                html += '</div>';
+            }
+
+            document.getElementById('infoTitle').textContent = data.title;
+            document.getElementById('infoContent').innerHTML = html;
+            document.getElementById('infoPanel').classList.add('open');
+
+            // Highlight connections
+            highlightConnections(componentId);
+        }
+
+        // Close info panel
+        function closeInfo() {
+            document.getElementById('infoPanel').classList.remove('open');
+            if (activeComponent) {
+                document.querySelector(`[data-id="${activeComponent}"]`).classList.remove('active');
+                activeComponent = null;
+            }
+            // Remove connection highlights
+            document.querySelectorAll('.connection').forEach(conn => {
+                conn.classList.remove('active');
+            });
+        }
+
+        // Highlight connections for a component
+        function highlightConnections(componentId) {
+            document.querySelectorAll('.connection').forEach(conn => {
+                conn.classList.remove('active');
+            });
+            
+            connections.forEach((conn, index) => {
+                if (conn.from === componentId || conn.to === componentId) {
+                    const connEl = document.querySelector(`[data-connection="${index}"]`);
+                    if (connEl) connEl.classList.add('active');
+                }
+            });
+        }
+
+        // Filter components
+        function filterComponents(category) {
+            activeFilter = category;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === category) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Show/hide components
+            document.querySelectorAll('.component').forEach(comp => {
+                const compId = comp.dataset.id;
+                const compData = componentData[compId];
+                
+                if (category === 'all') {
+                    comp.style.opacity = '1';
+                    comp.style.pointerEvents = 'auto';
+                } else {
+                    const matches = 
+                        (category === 'network' && compData.category === 'network') ||
+                        (category === 'compute' && (compData.category === 'compute' || compData.category === 'compute')) ||
+                        (category === 'data' && compData.category === 'data') ||
+                        (category === 'security' && compData.category === 'security');
+                    
+                    comp.style.opacity = matches ? '1' : '0.2';
+                    comp.style.pointerEvents = matches ? 'auto' : 'none';
+                }
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click handlers to components
+            document.querySelectorAll('.component').forEach(comp => {
+                comp.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showInfo(comp.dataset.id);
+                });
+            });
+
+            // Add filter button handlers
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterComponents(btn.dataset.filter);
+                });
+            });
+
+            // Close panel when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.component') && !e.target.closest('.info-panel')) {
+                    closeInfo();
+                }
+            });
+
+            // Draw connections (simplified - in production use SVG or Canvas)
+            // For this demo, connections are visual indicators only
+            console.log('Interactive diagram loaded. Click components for details.');
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeInfo();
+            }
+        });
+    </script>
+</body>
+</html>
