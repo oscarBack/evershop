@@ -175,31 +175,36 @@ rds_backup_retention = 30
 - kubectl installed
 - AWS IAM permissions to create EKS, RDS, VPC, and IAM resources
 
-## Deployment
+## 📚 Documentation
 
-### Initialize Terraform
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Complete deployment guide with AWS SSO setup | All users |
+| [QUICK_START.md](./QUICK_START.md) | Fast-track deployment for experienced users | Advanced users |
+| [PRE_DEPLOYMENT_CHECKLIST.md](./PRE_DEPLOYMENT_CHECKLIST.md) | Pre-deployment validation checklist | All users |
+| [VERIFICATION.md](./VERIFICATION.md) | Detailed verification and health checks | All users |
+| [QUICK_VERIFICATION.md](./QUICK_VERIFICATION.md) | Quick reference for common checks | All users |
 
-```bash
-terraform init
-```
+## Quick Start
 
-### Plan Deployment
+For first-time deployment, follow the [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
 
-```bash
-terraform plan -var-file=dev.hcl -out=dev.tfplan
-```
-
-### Apply Deployment
-
-```bash
-terraform apply dev.tfplan
-```
-
-### Configure kubectl
+For experienced users:
 
 ```bash
-aws eks update-kubeconfig --name evershop-cluster --region us-east-1
+# 1. Configure AWS SSO (one-time)
+aws sso login --profile aws-evershop-dev
+
+# 2. Deploy infrastructure
+cd infra-evershop/eks-deployment
+make tf-dev
+terraform apply -var-file="dev.hcl"
+
+# 3. Configure kubectl
+aws eks update-kubeconfig --name evershop-cluster --region us-east-1 --profile aws-evershop-dev
 ```
+
+See [QUICK_START.md](./QUICK_START.md) for more details.
 
 ## Security Groups
 
