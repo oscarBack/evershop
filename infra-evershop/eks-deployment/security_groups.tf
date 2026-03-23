@@ -184,7 +184,7 @@ resource "aws_security_group_rule" "rds_egress_none" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  description       = "Deny all egress (RDS doesn't initiate connections)"
+  description       = "Deny all egress - RDS does not initiate connections"
 }
 
 # =============================================================================

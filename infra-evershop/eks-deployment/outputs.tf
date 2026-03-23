@@ -110,12 +110,6 @@ output "react_frontend_ingress_hostname" {
   value       = try(kubernetes_ingress_v1.react_frontend.status[0].load_balancer[0].ingress[0].hostname, null)
 }
 
-# AWS Load Balancer Controller
-output "aws_load_balancer_controller_release_name" {
-  description = "Helm release name of the AWS Load Balancer Controller"
-  value       = module.aws_load_balancer_controller.release_name
-}
-
 # ACM Certificate
 output "acm_certificate_arn" {
   description = "ARN of the ACM certificate attached to the ALB ingress"
