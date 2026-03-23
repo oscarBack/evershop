@@ -27,11 +27,10 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "evershop-terraform-state"
-    key            = "eks-deployment/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "evershop-terraform-locks"
+    bucket  = "evershop-terraform-state"
+    key     = "eks-deployment/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
   }
 }
 
