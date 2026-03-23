@@ -11,7 +11,7 @@
 
 module "aws_load_balancer_controller" {
   source  = "DNXLabs/eks-lb-controller/aws"
-  version = "0.8.1"
+  version = "0.11.0"
 
   # EKS cluster identity
   cluster_name                     = module.eks.cluster_name
@@ -19,12 +19,12 @@ module "aws_load_balancer_controller" {
   cluster_identity_oidc_issuer_arn = module.eks.oidc_provider_arn
 
   # Helm configuration
-  helm_chart_version = "1.6.2"
+  helm_chart_version = "1.10.1"
   namespace          = "kube-system"
   create_namespace   = false
 
   # Service account configuration
-  service_account_name = "aws-load-balancer-controller"
+  service_account_name = "aws-alb-ingress-controller"
 
   # Additional Helm values for controller configuration
   settings = {
