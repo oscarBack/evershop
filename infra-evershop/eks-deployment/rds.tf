@@ -83,10 +83,11 @@ module "rds" {
   storage_encrypted    = true
   kms_key_id           = aws_kms_key.rds.arn
 
-  db_name  = var.rds_db_name
-  username = var.rds_username
-  password = random_password.rds.result
-  port     = 5432
+  db_name                     = var.rds_db_name
+  username                    = var.rds_username
+  password                    = random_password.rds.result
+  manage_master_user_password = false
+  port                        = 5432
 
   multi_az               = var.rds_multi_az
   db_subnet_group_name   = module.vpc.database_subnet_group_name
@@ -95,9 +96,9 @@ module "rds" {
   backup_retention_period   = var.rds_backup_retention_period
   backup_window             = "03:00-04:00"
   maintenance_window        = "sun:04:00-sun:05:00"
-  skip_final_snapshot       = var.environment == "dev" ? true : false
-  final_snapshot_identifier = var.environment != "dev" ? "${var.project_name}-final-${var.environment}" : null
-  deletion_protection       = var.environment == "prod" ? true : false
+  skip_final_snapshot              = var.environment == "dev" ? true : false
+  final_snapshot_identifier_prefix = var.environment != "dev" ? "${var.project_name}-final-${var.environment}" : "final"
+  deletion_protection              = var.environment == "prod" ? true : false
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
