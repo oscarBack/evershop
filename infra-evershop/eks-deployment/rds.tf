@@ -28,7 +28,7 @@ resource "random_password" "rds" {
 # Store password in Secrets Manager
 resource "aws_secretsmanager_secret" "rds_password" {
   name                    = "${var.project_name}/${var.environment}/rds-password"
-  recovery_window_in_days = 7
+  recovery_window_in_days = 0
 
   tags = merge(var.common_tags, {
     Name        = "${var.project_name}-rds-secret-${var.environment}"
@@ -96,9 +96,9 @@ module "rds" {
   backup_retention_period   = var.rds_backup_retention_period
   backup_window             = "03:00-04:00"
   maintenance_window        = "sun:04:00-sun:05:00"
-  skip_final_snapshot              = var.environment == "dev" ? true : false
-  final_snapshot_identifier_prefix = var.environment != "dev" ? "${var.project_name}-final-${var.environment}" : "final"
-  deletion_protection              = var.environment == "prod" ? true : false
+  skip_final_snapshot              = true
+  final_snapshot_identifier_prefix = "final"
+  deletion_protection              = false
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
