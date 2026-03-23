@@ -1,5 +1,4 @@
 # EKS Cluster Configuration
-# Uses internal module: git@bitbucket.org:Coopeuch/terraform.git//modules/aws_eks
 
 # KMS Key for cluster secrets encryption
 resource "aws_kms_key" "eks" {
@@ -31,23 +30,26 @@ resource "aws_cloudwatch_log_group" "eks_control_plane" {
   })
 }
 
-# EKS Cluster (ec2 sub-module)
+# EKS Cluster using Terraform Registry module
 module "eks" {
-  source = "git@bitbucket.org:Coopeuch/terraform.git//modules/aws_eks/ec2?ref=modules/aws_eks/ec2-v1.4.5"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
 
   cluster_name    = var.eks_cluster_name
   cluster_version = var.eks_version
 
-  vpc_id                   = module.vpc.vpc_id
-  subnet_ids               = module.vpc.private_subnets
-  control_plane_subnet_ids = concat(module.vpc.private_subnets, module.vpc.public_subnets)
-
+  # Cluster endpoint access
   cluster_endpoint_public_access  = var.eks_endpoint_public_access
   cluster_endpoint_private_access = var.eks_endpoint_private_access
 
+  # Networking
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = concat(module.vpc.private_subnets, module.vpc.public_subnets)
+
+  # Cluster logging
   cluster_enabled_log_types = var.eks_cluster_enabled_log_types
 
-  # KMS encryption for secrets
+  # Cluster encryption
   cluster_encryption_config = {
     provider_key_arn = aws_kms_key.eks.arn
     resources        = ["secrets"]
@@ -56,19 +58,20 @@ module "eks" {
   # IRSA
   enable_irsa = true
 
-  # Node group
+  # EKS Managed Node Group
   eks_managed_node_groups = {
     "${var.project_name}-ng" = {
+      name            = "${var.project_name}-ng"
+      use_name_prefix = true
+
       instance_types = var.node_instance_types
-      ami_type       = "AL2_x86_64"
+      capacity_type  = "ON_DEMAND"
 
       min_size     = var.node_min_capacity
       max_size     = var.node_max_capacity
       desired_size = var.node_desired_capacity
 
       disk_size = var.node_disk_size
-
-      iam_role_arn = aws_iam_role.eks_node_role.arn
 
       vpc_security_group_ids = [aws_security_group.eks_nodes.id]
 
@@ -84,6 +87,7 @@ module "eks" {
     }
   }
 
+  # Cluster tags
   tags = merge(var.common_tags, {
     Name        = var.eks_cluster_name
     Environment = var.environment
@@ -92,8 +96,5 @@ module "eks" {
 
   depends_on = [
     aws_cloudwatch_log_group.eks_control_plane,
-    aws_iam_role_policy_attachment.eks_node_worker,
-    aws_iam_role_policy_attachment.eks_node_cni,
-    aws_iam_role_policy_attachment.eks_node_ecr,
   ]
 }

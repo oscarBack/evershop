@@ -1,5 +1,5 @@
 # RDS PostgreSQL Configuration
-# Uses internal module: git@bitbucket.org:Coopeuch/terraform.git//modules/aws_rds/db/postgres
+# Uses public Terraform Registry module: terraform-aws-modules/rds/aws
 
 # KMS Key for RDS encryption
 resource "aws_kms_key" "rds" {
@@ -68,16 +68,20 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
 
 # RDS PostgreSQL instance
 module "rds" {
-  source = "git@bitbucket.org:Coopeuch/terraform.git//modules/aws_rds/db/postgres?ref=modules/aws_rds-db-postgres-v2.0.0"
+  source  = "terraform-aws-modules/rds/aws"
+  version = "~> 6.0"
 
   identifier = "${var.project_name}-${var.environment}"
 
-  engine_version    = var.rds_engine_version
-  instance_class    = var.rds_instance_class
-  allocated_storage = var.rds_allocated_storage
-  storage_type      = "gp3"
-  storage_encrypted = true
-  kms_key_id        = aws_kms_key.rds.arn
+  engine               = "postgres"
+  engine_version       = var.rds_engine_version
+  family               = "postgres${split(".", var.rds_engine_version)[0]}"
+  major_engine_version = split(".", var.rds_engine_version)[0]
+  instance_class       = var.rds_instance_class
+  allocated_storage    = var.rds_allocated_storage
+  storage_type         = "gp3"
+  storage_encrypted    = true
+  kms_key_id           = aws_kms_key.rds.arn
 
   db_name  = var.rds_db_name
   username = var.rds_username
@@ -95,10 +99,10 @@ module "rds" {
   final_snapshot_identifier = var.environment != "dev" ? "${var.project_name}-final-${var.environment}" : null
   deletion_protection       = var.environment == "prod" ? true : false
 
-  monitoring_interval = 60
-  monitoring_role_arn = aws_iam_role.rds_monitoring.arn
-
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+
+  performance_insights_enabled    = true
+  performance_insights_kms_key_id = aws_kms_key.rds.arn
 
   tags = merge(var.common_tags, {
     Name        = "${var.project_name}-rds-${var.environment}"

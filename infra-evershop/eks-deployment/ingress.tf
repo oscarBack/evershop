@@ -5,88 +5,53 @@
 
 # =============================================================================
 # AWS Load Balancer Controller
-# Uses internal module: aws_eks/microservice-v3.0.0
+# Uses public Terraform Registry module: DNXLabs/eks-lb-controller/aws
 # Deploys the controller via Helm into kube-system with IRSA for ALB management
 # =============================================================================
 
 module "aws_load_balancer_controller" {
-  source = "git@bitbucket.org:Coopeuch/terraform.git//modules/aws_eks/microservice?ref=modules/aws_eks/microservice-v3.0.0"
+  source  = "DNXLabs/eks-lb-controller/aws"
+  version = "0.8.1"
 
   # EKS cluster identity
-  cluster_name     = module.eks.cluster_name
-  cluster_endpoint = module.eks.cluster_endpoint
-  cluster_ca_data  = module.eks.cluster_certificate_authority_data
+  cluster_name                     = module.eks.cluster_name
+  cluster_identity_oidc_issuer     = module.eks.cluster_oidc_issuer_url
+  cluster_identity_oidc_issuer_arn = module.eks.oidc_provider_arn
 
-  # Helm release configuration
-  release_name     = "aws-load-balancer-controller"
-  chart_name       = "aws-load-balancer-controller"
-  chart_repository = "https://aws.github.io/eks-charts"
-  chart_version    = "1.6.2"
-  namespace        = "kube-system"
-  create_namespace = false
+  # Helm configuration
+  helm_chart_version = "1.6.2"
+  namespace          = "kube-system"
+  create_namespace   = false
 
-  # Service account with IRSA annotation
+  # Service account configuration
   service_account_name = "aws-load-balancer-controller"
-  irsa_role_arn        = aws_iam_role.aws_load_balancer_controller.arn
 
-  # Helm values — configure controller for this cluster/VPC
-  set_values = [
-    {
-      name  = "clusterName"
-      value = module.eks.cluster_name
-    },
-    {
-      name  = "region"
-      value = var.aws_region
-    },
-    {
-      name  = "vpcId"
-      value = module.vpc.vpc_id
-    },
-    {
-      name  = "serviceAccount.create"
-      value = "true"
-    },
-    {
-      name  = "serviceAccount.name"
-      value = "aws-load-balancer-controller"
-    },
-    {
-      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-      value = aws_iam_role.aws_load_balancer_controller.arn
-    },
-    {
-      name  = "replicaCount"
-      value = "2"
-    },
-    {
-      name  = "resources.requests.cpu"
-      value = "100m"
-    },
-    {
-      name  = "resources.requests.memory"
-      value = "128Mi"
-    },
-    {
-      name  = "resources.limits.cpu"
-      value = "200m"
-    },
-    {
-      name  = "resources.limits.memory"
-      value = "256Mi"
-    },
-  ]
+  # Additional Helm values for controller configuration
+  settings = {
+    clusterName = module.eks.cluster_name
+    region      = var.aws_region
+    vpcId       = module.vpc.vpc_id
+    replicaCount = 2
+    resources = {
+      requests = {
+        cpu    = "100m"
+        memory = "128Mi"
+      }
+      limits = {
+        cpu    = "200m"
+        memory = "256Mi"
+      }
+    }
+  }
 
+  # IAM role tags
   tags = merge(var.common_tags, {
     Environment = var.environment
     Component   = "ingress"
     Name        = "${var.project_name}-aws-lbc-${var.environment}"
   })
 
-  depends_on = [
-    module.eks,
-    aws_iam_role_policy_attachment.aws_load_balancer_controller_policy,
-  ]
+  depends_on = [module.eks]
 }
 
 # =============================================================================
